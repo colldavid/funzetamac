@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session
 import numpy as np
 
 app = Flask(__name__)
@@ -23,6 +23,14 @@ HTML = """
       const form = document.getElementById('form');
       const output = document.getElementById('output');
 
+      async function loadProblem() {
+        const res = await fetch('/problem');
+        const data = await res.json();
+        problem.textContent = data.problem;
+      }
+
+      problem.textContent = loadProblem().;
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault(); // stop page refresh
         const text = document.getElementById('text').value;
@@ -35,7 +43,7 @@ HTML = """
         });
 
         const data = await response.json();
-        problem.textContent = data.problem;
+        problem.textContent = loadProblem();
         output.textContent = data.output;
       });
     </script>
@@ -47,6 +55,18 @@ HTML = """
 def index():
     return HTML
 
+@app.route("/problem", methods=["POST"])
+def get_problem():
+    num1 = np.random.randint(0,10)
+    num2 = np.random.randint(0,10)
+    problem = f"{num1} + {num2}"
+    return jsonify({
+        "problem": problem,
+        "nums": (num1, num2)
+    })
+    # session["nums"] = (num1, num2)
+
+
 @app.route("/process", methods=["POST"])
 def process():
     data = request.get_json()
@@ -57,10 +77,7 @@ def process():
     except:
         num = "enter an integer!!"
 
-    num1 = np.random.randint(0,10)
-    num2 = np.random.randint(0,10)
-    problem = f"{num1} + {num2}"
-    output = "Correct!" if num == num1+num2 else "Wrong!"
+
     return jsonify({"output": f"{output}",
                     "problem": problem})
 
